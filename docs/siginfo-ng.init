@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# simple initscript for siginfo-ng
+#
+
+CONFFILE="/etc/siginfo-ng.conf"
+PIDFILE="/var/run/siginfo-ng.pid"
+LOGFILE="/var/log/siginfo-ng.log"
+INTERVAL=600
+
+case "$1" in
+    start)
+        echo "Starting siginfo-ng"
+        /usr/bin/siginfo-ng -d -i ${INTERVAL} \
+                    -c ${CONFFILE} -p ${PIDFILE} -l ${LOGFILE}
+        ;;
+    stop)
+        echo "Starting siginfo-ng"
+        /usr/bin/siginfo-ng -k -p ${PIDFILE}
+        ;;
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart}"
+esac
+exit 0
