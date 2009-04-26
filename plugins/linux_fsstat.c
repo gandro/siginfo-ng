@@ -31,6 +31,12 @@ void update_fsstat() {
     FILE *mounttab;
     struct statfs fsstat;
     char line[512], *mountpoint;
+    static int last_updated = -1;
+
+    if(last_updated == profile.last_updated) {
+        return;
+    }
+    last_updated = profile.last_updated;
 
     mounttab = fopen("/proc/mounts", "r");
     if(mounttab == NULL) {
@@ -56,11 +62,13 @@ void update_fsstat() {
             return;
         }
 
-        linux_fsstat.hdd_total += (float)(fsstat.f_blocks*fsstat.f_bsize)/GByte;
-        linux_fsstat.hdd_free += (float)(fsstat.f_bavail*fsstat.f_bsize)/GByte;
-        linux_fsstat.hdd_used += linux_fsstat.hdd_total - linux_fsstat.hdd_free;
+        linux_fsstat.hdd_total +=
+            (((double)fsstat.f_blocks)*((double)fsstat.f_bsize))/GByte;
+        linux_fsstat.hdd_free +=
+            (((double)fsstat.f_bavail)*((double)fsstat.f_bsize))/GByte;
         linux_fsstat.fscount++;
     }
+    linux_fsstat.hdd_used = linux_fsstat.hdd_total - linux_fsstat.hdd_free;
 }
 
 void fsstat_hdd_total(plugin_t *self) {
