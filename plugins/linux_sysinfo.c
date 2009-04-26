@@ -54,15 +54,20 @@ void update_sysinfo() {
 
     linux_sysinfo.processes = (int) sysinfo_st.procs;
 
-    linux_sysinfo.ram_total = (int) (sysinfo_st.totalram/MByte);
-    linux_sysinfo.ram_free = (int) (sysinfo_st.freeram/MByte);
+    linux_sysinfo.ram_total =
+        (int) ((sysinfo_st.totalram * sysinfo_st.mem_unit)/MByte);
+    linux_sysinfo.ram_free =
+        (int) ((sysinfo_st.freeram * sysinfo_st.mem_unit)/MByte);
     linux_sysinfo.ram_used =
         linux_sysinfo.ram_total - linux_sysinfo.ram_free;
 
-    linux_sysinfo.swap_total = (int) (sysinfo_st.totalswap/MByte);
-    linux_sysinfo.swap_free = (int) (sysinfo_st.freeswap/MByte);
+    linux_sysinfo.swap_total =
+        (int) ((sysinfo_st.totalswap * sysinfo_st.mem_unit)/MByte);
+    linux_sysinfo.swap_free =
+        (int) ((sysinfo_st.freeswap * sysinfo_st.mem_unit)/MByte);
     linux_sysinfo.swap_used =
         linux_sysinfo.swap_total - linux_sysinfo.swap_free;
+
 }
 
 #define create_sysinfo_hook(unit) \
