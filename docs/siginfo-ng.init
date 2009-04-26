@@ -15,7 +15,7 @@ case "$1" in
                     -c ${CONFFILE} -p ${PIDFILE} -l ${LOGFILE}
         ;;
     stop)
-        echo "Starting siginfo-ng"
+        echo "Stopping siginfo-ng"
         /usr/bin/siginfo-ng -k -p ${PIDFILE}
         ;;
     restart)

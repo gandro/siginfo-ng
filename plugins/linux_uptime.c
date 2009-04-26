@@ -46,13 +46,13 @@ void update_uptime() {
     uptime.mins = uptime.mins_total % 60;
 
     uptime.hours_total = uptime.mins_total / 60;
-    uptime.hours = uptime.hours_total % 60;
+    uptime.hours = uptime.hours_total % 24;
 
     uptime.days_total = uptime.hours_total / 24;
-    uptime.days = uptime.days_total % 24;
+    uptime.days = uptime.days_total % 356;
 
-    uptime.years_total = uptime.years_total / 356;
-    uptime.years = uptime.years_total % 356;
+    uptime.years_total = uptime.days_total / 356;
+    uptime.years = uptime.years_total;
 }
 
 #define create_uptime_hook(unit) \
