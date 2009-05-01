@@ -28,7 +28,7 @@ clean:
 
 install: siginfo-ng
 	install -D -m 755 siginfo-ng $(DESTDIR)/usr/bin
-	install -D -m 644 docs/sample.conf $(DESTDIR)/etc/siginfo-ng.conf
+	install -D -b -m 644 docs/sample.conf $(DESTDIR)/etc/siginfo-ng.conf
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< $(LDFLAGS)
