@@ -142,7 +142,7 @@ int http_get_siginfo_status() {
 
     if(
         recv(http_socket.fd, buffer, 512, MSG_PEEK) < 0 ||
-        strncmp(buffer, "HTTP/1.1 200", 12) != 0
+        strncmp(buffer+strlen("HTTP/1.x "), "200", 3) != 0
     ) {
         return 301;
     }

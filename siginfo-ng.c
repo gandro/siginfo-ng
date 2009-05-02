@@ -294,10 +294,10 @@ void print_help() {
     printf("    -d            Run as daemon\n");
     printf("    -p PIDFILE    Specify pidfile (default: \"%s\")\n", PIDFILE);
     printf("    -i INTERVAL   "
-                    "Specify update interval (default: %i)\n", INTERVAL);
+                    "Specify update interval in seconds (default: %i)\n", INTERVAL);
     printf("    -k            Terminate running daemon\n");
     printf("    -c FILE       "
-                    "Load settings from file (default: \"%s\"\n", CONFIGFILE);
+                    "Load settings from file (default: \"%s\")\n", CONFIGFILE);
     printf("    -l FILE       "
                     "Write error messages to logfile (default: none)\n");
     printf("    -a            Show available plugins and quit\n");

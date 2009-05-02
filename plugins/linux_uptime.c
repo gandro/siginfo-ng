@@ -49,9 +49,9 @@ void update_uptime() {
     uptime.hours = uptime.hours_total % 24;
 
     uptime.days_total = uptime.hours_total / 24;
-    uptime.days = uptime.days_total % 356;
+    uptime.days = uptime.days_total % 365;
 
-    uptime.years_total = uptime.days_total / 356;
+    uptime.years_total = uptime.days_total / 365;
     uptime.years = uptime.years_total;
 }
 
