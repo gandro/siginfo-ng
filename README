@@ -20,9 +20,9 @@ Usage:
         -s            Print Siginfo rows, don't send any data
         -d            Run as daemon
         -p PIDFILE    Specify pidfile (default: "/var/run/siginfo-ng.pid")
-        -i INTERVAL   Specify update interval (default: 600)
+        -i INTERVAL   Specify update interval in seconds (default: 600)
         -k            Terminate running daemon
-        -c FILE       Load settings from file (default: "/etc/siginfo-ng.conf"
+        -c FILE       Load settings from file (default: "/etc/siginfo-ng.conf")
         -l FILE       Write error messages to logfile (default: none)
         -a            Show available plugins and quit
         -v            Show version information and quit
