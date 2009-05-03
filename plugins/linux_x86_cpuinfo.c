@@ -91,6 +91,8 @@ void linux_x86_cpuinfo_init() {
         }
     }
 
+    fclose(cpuinfo_d);
+
     cpu_s = cpu_n+1;
     for(i=0; i<cpu_s; i++) {
         char hook[32];

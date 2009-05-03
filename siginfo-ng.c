@@ -38,14 +38,6 @@ void load_config() {
 
     memset(line, 0, sizeof(line));
 
-    /* start with empty profile */
-    profile.username[0] = profile.password[0] = profile.username[0] ='\0';
-    for(i=0; i<5; i++) {
-        profile.row[i][0].type = SECTION_TYPE_NULL;
-        profile.row[i][0].data = NULL;
-    }
-    profile.last_updated = 0;
-
     while(fgets(line, sizeof(line), config) != NULL) {
         line_n++;
         line[strlen(line)-1] = '\0';
@@ -179,6 +171,31 @@ char *update_row(unsigned int row_n) {
     return row;
 }
 
+void init_profile() {
+    int i;
+
+    profile.username[0] = profile.password[0] = profile.username[0] ='\0';
+    for(i=0; i<5; i++) {
+        profile.row[i][0].type = SECTION_TYPE_NULL;
+        profile.row[i][0].data = NULL;
+    }
+    profile.last_updated = 0;
+}
+
+void clear_profile() {
+    int i, j;
+
+    for(i=0; i<5; i++) {
+        for(j=0; profile.row[i][j].type != SECTION_TYPE_NULL; j++) {
+            if(profile.row[i][j].type == SECTION_TYPE_STRING) {
+                free(profile.row[i][j].data);
+            }
+        }
+        profile.row[i][0].type = SECTION_TYPE_NULL;
+        profile.row[i][0].data = NULL;
+    }
+}
+
 void print_siginfo_status(int status) {
     switch(status) {
         case 100:
@@ -286,6 +303,13 @@ void print_siginfo_data() {
     }
 }
 
+void cleanup() {
+    clear_profile();
+    clear_plugins();
+
+    fclose(logfile);
+}
+
 void print_help() {
     printf("%s [OPTION...]\n", CLIENT);
     printf("Next Generation Siginfo Client\n");
@@ -314,6 +338,9 @@ int main(int argc, char *argv[]) {
     enum { DAEMON_NONE, DAEMON_START, DAEMON_STOP } daemonize = DAEMON_NONE;
     pid_t pid;
     FILE *pidfile_d;
+
+    init_profile();
+    atexit(cleanup);
 
     logfile = stderr;
     configfile = CONFIGFILE;
@@ -371,8 +398,8 @@ int main(int argc, char *argv[]) {
             pidfile_d = fopen(pidfile, "r");
             if(pidfile_d != NULL) {
                 fprintf(stderr,"Error: Daemon already running!?\n");
-                return EXIT_FAILURE;
                 fclose(pidfile_d);
+                return EXIT_FAILURE;
             } 
             
             pidfile_d = fopen(pidfile, "w");
@@ -381,10 +408,11 @@ int main(int argc, char *argv[]) {
                     "Error: Failed open pidfile: %s\n", strerror(errno));
                 return EXIT_FAILURE;
             }
-
             pid = fork();
+
             if(pid == 0) {
-                signal(SIGINT, clear_plugins);
+                signal(SIGTERM, cleanup);
+                fclose(pidfile_d);
                 do {
                     send_siginfo_data();
                 } while(sleep(interval) == 0);
@@ -417,8 +445,5 @@ int main(int argc, char *argv[]) {
             break;
     }
 
-    clear_plugins();
-
-    fclose(logfile);
     return EXIT_SUCCESS;
 }

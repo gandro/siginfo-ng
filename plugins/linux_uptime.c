@@ -73,8 +73,15 @@ create_uptime_hook(hours_total);
 create_uptime_hook(days);
 create_uptime_hook(days_total);
 
-create_uptime_hook(years);
 create_uptime_hook(years_total);
+
+void uptime_hhmmss(plugin_t *self) {
+    char value[9];
+    update_uptime();
+    snprintf(value, sizeof(value), "%02i:%02i:%02i",
+        uptime.hours, uptime.mins, uptime.secs);
+    set_value(self, value, T_STRING);
+}
 
 void linux_uptime_init() {
 
@@ -90,7 +97,6 @@ void linux_uptime_init() {
     register_plugin("UPTIME_DAYS", uptime_days);
     register_plugin("UPTIME_DAYS_TOTAL", uptime_days_total);
 
-    register_plugin("UPTIME_YEARS", uptime_years);
     register_plugin("UPTIME_YEARS_TOTAL", uptime_years_total);
-
+    register_plugin("UPTIME_HH:MM:SS", uptime_hhmmss);
 }

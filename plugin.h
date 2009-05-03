@@ -22,16 +22,16 @@ typedef enum ValueType {
     T_INTEGER,
     T_LONG,
     T_FLOAT
-} type_t ;
+} type_t;
 
 extern plugin_t plugin[64];
+extern size_t plugin_s;
 
 extern void init_plugins();
 void clear_plugins();
 void print_plugins();
 
-void register_plugin(const char *name, void (*function)());
-void unregister_plugin(const char *name);
+void register_plugin(const char *name, void (*func)(plugin_t *self));
 
 plugin_t *find_plugin(const char *name);
 int cmp_plugin();

@@ -17,7 +17,7 @@
 #define ROW_MAXVARS 48
 
 #define CLIENT  "siginfo-ng"
-#define VERSION "0.1.2"
+#define VERSION "0.1.3"
 
 #define PIDFILE    "/var/run/siginfo-ng.pid"
 #define INTERVAL   600
@@ -47,9 +47,15 @@ extern char *configfile;
 void load_config();
 void parse_row(char *src, unsigned int row_n);
 char *update_row(unsigned int row_n);
+
+void init_profile();
+void clear_profile();
+
 void print_siginfo_status(int status);
 void send_siginfo_data();
 void print_siginfo_data();
+
+void cleanup();
 void print_help();
 
 #endif /* SIGINFONG_H */

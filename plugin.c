@@ -27,6 +27,7 @@ int chk_plugin(const void *name, const void *plugin) {
 }
 
 void register_plugin(const char *name, void (*function)(plugin_t *self)) {
+
     if(find_plugin(name) != NULL) {
 
         fprintf(logfile, "Warning: Plugin \"%s\" already registered!\n", name);
@@ -49,22 +50,15 @@ void register_plugin(const char *name, void (*function)(plugin_t *self)) {
     }
 }
 
-void unregister_plugin(const char *name) {
-    plugin_t *plugin_p;
-
-    if((plugin_p = find_plugin(name)) != NULL) {
-        free(plugin_p->name);
-        free(plugin_p->value);
-        plugin_p->function = NULL;
-        plugin_s--;
-    }
-}
-
 void clear_plugins() {
     int i;
     for(i=0; i<plugin_s; i++) {
-        unregister_plugin(plugin[i].name);
+        free(plugin[i].name);
+        free(plugin[i].value);
+        plugin[i].function = NULL;
     }
+
+    plugin_s = 0;
 }
 
 void print_plugins() {

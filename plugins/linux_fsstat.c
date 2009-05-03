@@ -69,6 +69,8 @@ void update_fsstat() {
         linux_fsstat.fscount++;
     }
     linux_fsstat.hdd_used = linux_fsstat.hdd_total - linux_fsstat.hdd_free;
+
+    fclose(mounttab);
 }
 
 void fsstat_hdd_total(plugin_t *self) {
