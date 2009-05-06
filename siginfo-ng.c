@@ -74,16 +74,16 @@ void load_config() {
 }
 
 void parse_row(char *src, unsigned int row_n) {
-    char buffer[TOKEN_MAXLEN];
+    char buffer[128];
     char *token = NULL, *token_end = NULL;
     plugin_t *plugin_p = NULL;
     int token_len = 0, var_n = 0;
 
-    memset(buffer, 0, TOKEN_MAXLEN);
+    memset(buffer, 0, sizeof(buffer));
     token = strtok(src, "{");
     do {
         if((token_end = strchr(token, '}')) != NULL) {
-            token_len = (token_end - token) % TOKEN_MAXLEN;
+            token_len = (token_end - token) % sizeof(buffer);
             strncpy(buffer, token, token_len);
             buffer[token_len] = '\0';
 
@@ -239,7 +239,7 @@ void print_siginfo_status(int status) {
             break;
 
         default:
-            fprintf(logfile, "Error: Unknown error (%i).\n", status);
+            fprintf(logfile, "Error: Unknown server error (%i).\n", status);
             break;
     }
 }

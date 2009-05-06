@@ -13,7 +13,6 @@
 
 #include <time.h>
 
-#define TOKEN_MAXLEN 128
 #define ROW_MAXVARS 48
 
 #define CLIENT  "siginfo-ng"
