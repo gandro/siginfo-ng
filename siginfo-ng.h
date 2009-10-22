@@ -16,7 +16,7 @@
 #define ROW_MAXVARS 48
 
 #define CLIENT  "siginfo-ng"
-#define VERSION "0.1.3"
+#define VERSION "0.1.4"
 
 #define PIDFILE    "/var/run/siginfo-ng.pid"
 #define INTERVAL   600
