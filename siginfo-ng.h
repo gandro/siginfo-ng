@@ -1,60 +1,60 @@
-/*
- * ----------------------------------------------------------------------------
- * "THE COFFEE-WARE LICENSE" (Revision 12/2007):
- * Sebastian Wicki <gandro@gmx.net> wrote this file. As long as you retain
- * this notice you can do whatever you want with this stuff. If we meet some
- * day, and you think this stuff is worth it, you can buy me a cup of coffee
- * in return. 
- * ----------------------------------------------------------------------------
- */
+#ifndef _SIGINFO_NG_H
+#define _SIGINFO_NG_H
 
-#ifndef SIGINFONG_H
-#define SIGINFONG_H
+#include <lua.h>
 
-#include <time.h>
+#define CLIENT_NAME     "siginfo-ng"
+#define CLIENT_VERSION  "0.2.0pre1"
 
-#define ROW_MAXVARS 48
+#define SIGINFO_SERVER      "siginfo.de"
+#define SIGINFO_PORT        80
+#define SIGINFO_INTERVAL    600
+#define SIGINFO_COMPUTER    "default-pc"
 
-#define CLIENT  "siginfo-ng"
-#define VERSION "0.1.4"
+#define SIGINFO_ROWS     5
+#define SIGINFO_ROWLEN   250
 
-#define PIDFILE    "/var/run/siginfo-ng.pid"
-#define INTERVAL   600
-#define CONFIGFILE "/etc/siginfo-ng.conf"
+#define LUA_PLUGIN_EXT        ".lua"
+#define LUA_PLUGIN_METATABLE  "siginfo_Lua_Plugin.metatable"
 
 typedef struct {
-    enum section_type {
-        SECTION_TYPE_STRING,
-        SECTION_TYPE_PLUGIN,
-        SECTION_TYPE_NULL,
-    } type;
-    void *data;
-} section_t;
+    char row[SIGINFO_ROWS][SIGINFO_ROWLEN];
+} siginfo_Layout;
 
 typedef struct {
-    char username[51];
-    char password[41];
-    char computer[51];
-    section_t row[5][ROW_MAXVARS];
-    time_t last_updated;
-} siginfo_profile_t;
+    const char *server;
+    const char *port;
 
-extern siginfo_profile_t profile;
-extern FILE *logfile;
-extern char *configfile;
+    const char *username;
+    const char *password;
+    const char *computer;
 
-void load_config();
-void parse_row(char *src, unsigned int row_n);
-char *update_row(unsigned int row_n);
+    const char *uptime;
+    const char *version;
 
-void init_profile();
-void clear_profile();
+    siginfo_Layout layout;
 
-void print_siginfo_status(int status);
-void send_siginfo_data();
-void print_siginfo_data();
+    unsigned int interval;
+} siginfo_Settings;
 
-void cleanup();
-void print_help();
+typedef enum { log_Notice, log_Warning, log_Error, log_Fatal } log_Severity;
 
-#endif /* SIGINFONG_H */
+void log_print(log_Severity severity, const char *fmt, ...);
+
+lua_State *lua_helper_initstate();
+void lua_helper_printerror(lua_State *L);
+void lua_helper_callfunction(lua_State *L, int nargs, int nresults);
+
+void lua_plugin_load(lua_State *L, const char *namespace, const char *filename);
+void lua_plugin_load_dir(lua_State *L, const char *directory);
+
+void lua_settings_loadfile(lua_State *L, const char *configfile);
+void lua_settings_parse(lua_State *L, siginfo_Settings *settings);
+void lua_settings_parse_layout(lua_State *L, siginfo_Layout *layout);
+int lua_settings_onupdate_callback(lua_State *L);
+void lua_settings_onerror_callback(lua_State *L, const char *message, int status);
+
+int siginfo_publish_data(siginfo_Settings *settings);
+const char *siginfo_status_message(int status);
+
+#endif /* _SIGINFO_NG_H */
