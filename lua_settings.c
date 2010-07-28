@@ -103,7 +103,7 @@ static void lua_settings_parse_uptime(lua_State *L, siginfo_Settings *settings) 
     if(lua_isnumber(L, -1)) {
         settings->uptime = lua_tostring(L, -1);
     } else {
-        settings->uptime = 0;
+        settings->uptime = "0";
         log_print(log_Warning, "Invalid value or function in uptime configuration!\n");
     }
 
@@ -171,26 +171,29 @@ void lua_settings_parse(lua_State *L, siginfo_Settings *settings) {
 int lua_settings_onupdate_callback(lua_State *L) {
     int doupdate = 1;
 
-    lua_getglobal(L, "onupdate");
+    lua_getglobal(L, "siginfo");
+    lua_getfield(L, -1, "onupdate");
+
     if(lua_isfunction(L, -1)) {
         lua_helper_callfunction(L, 0, 1);
         if(lua_isboolean(L, -1)) {
             doupdate = lua_toboolean(L, -1);
         }
     }
-    lua_pop(L, 1);
+    lua_pop(L, 2);
 
     return doupdate;
 }
 
 void lua_settings_onerror_callback(lua_State *L, const char *message, int status) {
-    lua_getglobal(L, "onerror");
+    lua_getglobal(L, "siginfo");
+    lua_getfield(L, -1, "onerror");
 
     if(lua_isfunction(L, -1)) {
         lua_pushstring(L, message);
         lua_pushnumber(L, status);
         lua_helper_callfunction(L, 2, 0);
-    } else {
-        lua_pop(L, 1);
     }
+
+    lua_pop(L, 2);
 }
