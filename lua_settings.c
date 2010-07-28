@@ -33,7 +33,6 @@ void lua_settings_parse_layout(lua_State *L, siginfo_Layout *layout) {
     char row[5];
     unsigned short i;
 
-//    lua_getglobal(L, "layout");
     lua_getfield(L, -1, "layout");
 
     if(!lua_istable(L, -1)) {
