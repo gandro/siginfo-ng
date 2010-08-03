@@ -1,22 +1,11 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 
 #include "siginfo-ng.h"
-
-#define LUA_HELPER_STATE "siginfo_Lua_Helper.state"
-
-static int lua_helper_load_plugin(lua_State *L) {
-    lua_plugin_load(L, luaL_checkstring(L, 1), luaL_checkstring(L, 2));
-    return 0;
-}
-
-static int lua_helper_load_plugin_dir(lua_State *L) {
-    lua_plugin_load_dir(L, luaL_checkstring(L, 1));
-    return 0;
-}
 
 static int lua_helper_pushtraceback(lua_State *L) {
     lua_getfield(L, LUA_GLOBALSINDEX, "debug");
@@ -35,6 +24,53 @@ static int lua_helper_pushtraceback(lua_State *L) {
     return 1;
 }
 
+static int lua_helper_composite_index(lua_State *L) {
+    /* copy child key */
+    lua_pushvalue(L, -1);
+
+    /* get child from table */
+    lua_rawget(L, -3);
+    if(lua_isnil(L, -1)) {
+        lua_pushvalue(L, -2);
+        lua_newtable(L);
+
+        luaL_getmetatable(L, LUA_PLUGIN_COMPOSITE);
+        lua_setmetatable(L, -2);
+
+        lua_settable(L, -5);
+    }
+
+    lua_pop(L, 1);
+    lua_rawget(L, -2);
+
+    return 1;
+}
+
+static int lua_helper_globalacc_index(lua_State *L) {
+    /* check global */
+    lua_pushvalue(L, 2);
+    lua_rawget(L, LUA_GLOBALSINDEX);
+    if(!lua_isnil(L, -1)) {
+        return 1;
+    } else {
+        lua_pop(L, 1);
+    }
+
+    /* check siginfo.ng.plugins */
+    lua_helper_getfield_siginfo_ng(L, "plugins");
+    lua_getfield(L, -1, luaL_checkstring(L, 2));
+    if(!lua_isnil(L, -1)) {
+        return 1;
+    } else {
+        lua_pop(L, 2);
+    }
+
+    /* check siginfo.ng.template */
+    lua_helper_getfield_siginfo_ng(L, "template");
+    lua_pushvalue(L, 2);
+    lua_rawget(L, -2);
+    return 1;
+}
 
 void lua_helper_printerror(lua_State *L) {
     log_print(log_Error, "%s\n", lua_tostring(L, -1));
@@ -57,52 +93,74 @@ void lua_helper_callfunction(lua_State *L, int nargs, int nresults) {
     lua_remove(L, (-1 - nresults));
 }
 
+void lua_helper_getfield_siginfo_ng(lua_State *L, const char *field) {
+    lua_getglobal(L, "siginfo");
+    lua_getfield(L, -1, "ng");
+    lua_getfield(L, -1, field);
+    lua_remove(L, -3);
+    lua_remove(L, -2);
+}
+
+void lua_helper_setfield_siginfo_ng(lua_State *L, const char *field) {
+    lua_getglobal(L, "siginfo");
+    lua_getfield(L, -1, "ng");
+    lua_remove(L, -2);
+    lua_insert(L, -2);
+    lua_setfield(L, -2, field);
+    lua_pop(L, 1);
+}
+
+static void lua_helper_register_metatables(lua_State *L) {
+    /* create metatable for global access */
+    luaL_newmetatable(L, LUA_PLUGIN_GLOBALACC);
+    lua_pushstring(L, "__index");
+    lua_pushcfunction(L, lua_helper_globalacc_index);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+
+    /* create metatable for plugin namespace */
+    luaL_newmetatable(L, LUA_PLUGIN_NAMESPACE);
+    lua_pushstring(L, "__index");
+    lua_pushvalue(L, LUA_GLOBALSINDEX);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+
+    /* create metatable for template variables rootnode */
+    luaL_newmetatable(L, LUA_PLUGIN_COMPOSITE);
+    lua_pushstring(L, "__index");
+    lua_pushcfunction(L, lua_helper_composite_index);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+}
+
 lua_State *lua_helper_initstate() {
     lua_State *L = lua_open();
 
     /* load Lua stdlib */
     luaL_openlibs(L);
-
-    /* create metatable for plugin namespace */
-    luaL_newmetatable(L, LUA_PLUGIN_METATABLE);
-    lua_pushstring(L, "__index");
-    lua_pushvalue(L, LUA_GLOBALSINDEX);
-    lua_rawset(L, -3);
-
-    /* remove metatable from stack */
-    lua_pop(L, 1);
+    lua_helper_register_metatables(L);
 
     /* push siginfo table to stack */
-    lua_createtable(L, 0, 7);
-
-    /* load settings defaults */
-    lua_pushstring(L, SIGINFO_SERVER);
-    lua_setfield(L, -2, "server");
-
-    lua_pushnumber(L, SIGINFO_PORT);
-    lua_setfield(L, -2, "port");
-
-    lua_pushnumber(L, SIGINFO_INTERVAL);
-    lua_setfield(L, -2, "interval");
-
-    lua_pushstring(L, SIGINFO_COMPUTER);
-    lua_setfield(L, -2, "computer");
-
-    lua_pushnumber(L, 0);
-    lua_setfield(L, -2, "uptime");
-
-    lua_pushstring(L, CLIENT_NAME " v" CLIENT_VERSION);
-    lua_setfield(L, -2, "version");
-
-    lua_createtable(L, 0, SIGINFO_ROWS);
-    lua_setfield(L, -2, "layout");
-
-    /* and set global */
+    lua_createtable(L, 0, 8);
+    lua_newtable(L);
+    lua_setfield(L, -2, "ng");
     lua_setglobal(L, "siginfo");
 
-    /* register wrapper functions */
-    lua_register(L, "load_plugin", lua_helper_load_plugin);
-    lua_register(L, "load_plugin_dir", lua_helper_load_plugin_dir);
+    /* create template variables rootnode */
+    lua_newtable(L);
+    luaL_getmetatable(L, LUA_PLUGIN_COMPOSITE);
+    lua_setmetatable(L, -2);
+    lua_helper_setfield_siginfo_ng(L, "template");
+
+    /* create plugin namespace table */
+    lua_newtable(L);
+    lua_helper_setfield_siginfo_ng(L, "plugins");
+
+    lua_settings_load_defaults(L);
+    lua_plugin_register_api(L);
+
+    luaL_getmetatable(L, LUA_PLUGIN_GLOBALACC);
+    lua_setmetatable(L, LUA_GLOBALSINDEX);
 
     return L;
 }

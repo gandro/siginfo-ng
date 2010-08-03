@@ -2,12 +2,17 @@
     POSIX uname system information
 ]]
 
-local function uname_info(param)
-    return io.popen("uname -"..param):read()
+using "OS"
+
+local function uname(param)
+    -- remove newline and whitespaces at the end
+    return string.match(siginfo.ng.readexec("uname -"..param), "(.-)%s*$")
 end
 
-sysname  = uname_info('s')
-nodename = uname_info('n')
-release  = uname_info('r')
-version  = uname_info('v')
-machine  = uname_info('m')
+if __init__ then
+    OS.SYSNAME  = uname("s")
+    OS.NODENAME = uname("n")
+    OS.RELEASE  = uname("r")
+    OS.VERSION  = uname("v")
+    OS.MACHINE  = uname("m")
+end

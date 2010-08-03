@@ -6,8 +6,24 @@ Build:
     $ make
     $ make install
 
-Make sure you have 'make' and a C compiler installed, for version 0.2 or higher
-you will also need the Lua Programming Language libraries on your system.
+Requirements:
+
+    - POSIX.1-2001 compatible operating system
+    - C-Compiler (with C99 snprintf and vsnprintf, as well as GNU getopt_long)
+    - Lua Programming Language libraries
+
+    Plugins may have additional requirements.
+
+    Note:
+
+        If you don't have or don't want Lua on your system, you may use the
+        following command to compile and link it statically into the siginfo-ng
+        binary:
+
+            $ make include-lua
+
+        If your libc does not support getopt_long, you may remove the
+        OPTIONS=-DUSE_GETOPT_LONG macro in the Makefile.
 
 Usage:
 

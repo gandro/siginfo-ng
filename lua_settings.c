@@ -1,29 +1,60 @@
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <libgen.h>
 
 #include <lua.h>
-#include <lualib.h>
 #include <lauxlib.h>
 
 #include "siginfo-ng.h"
 
+void lua_settings_load_defaults(lua_State *L) {
+    lua_getglobal(L, "siginfo");
+
+    /* load settings defaults */
+    lua_pushstring(L, SIGINFO_SERVER);
+    lua_setfield(L, -2, "server");
+
+    lua_pushnumber(L, SIGINFO_PORT);
+    lua_setfield(L, -2, "port");
+
+    lua_pushnumber(L, SIGINFO_INTERVAL);
+    lua_setfield(L, -2, "interval");
+
+    lua_pushstring(L, SIGINFO_COMPUTER);
+    lua_setfield(L, -2, "computer");
+
+    lua_pushnumber(L, 0);
+    lua_setfield(L, -2, "uptime");
+
+    lua_pushstring(L, CLIENT_NAME " v" CLIENT_VERSION);
+    lua_setfield(L, -2, "version");
+
+    lua_createtable(L, 0, SIGINFO_ROWS);
+    lua_setfield(L, -2, "layout");
+
+    lua_pop(L, 1);
+}
+
 void lua_settings_loadfile(lua_State *L, const char *configfile) {
-    char *fullpath;
+    char configpath[PATH_MAX];
 
     if(luaL_loadfile(L, configfile) != 0) {
         lua_helper_printerror(L);
     }
 
-    fullpath = realpath(configfile, NULL);
-    if(fullpath != NULL) {
-        lua_pushstring(L, fullpath);
-        lua_setglobal(L, "__self");
+    if(realpath(configfile, configpath) != NULL) {
+        char pluginpath[PATH_MAX];
 
-        lua_pushstring(L, dirname(fullpath));
-        lua_setglobal(L, "__path");
+        lua_pushstring(L, configpath);
+        lua_helper_setfield_siginfo_ng(L, "configpath");
 
-        free(fullpath);
+        snprintf(pluginpath, PATH_MAX, "%s/%s", dirname(configpath), "plugins/");
+
+        lua_pushstring(L, pluginpath);
+        lua_helper_setfield_siginfo_ng(L, "pluginpath");
+
+        lua_plugin_load_dir(L, pluginpath);
     }
 
     lua_helper_callfunction(L, 0, 0);
@@ -62,8 +93,8 @@ void lua_settings_parse_layout(lua_State *L, siginfo_Layout *layout) {
 
         lua_pushnil(L); /* first key */
         while(lua_next(L, -2) != 0) {
+            /* key at index -2 and value at index -1 */
             const char *value;
-               /* key at index -2 and value at index -1 */
 
             if(lua_type(L, -1) == LUA_TFUNCTION) {
                 /* pop function and push result on the stack */
@@ -71,14 +102,18 @@ void lua_settings_parse_layout(lua_State *L, siginfo_Layout *layout) {
             }
 
             value = lua_tostring(L, -1);
+            if(value != NULL) {
+                if(strlen(layout->row[i]) + strlen(value) >= SIGINFO_ROWLEN) {
+                    log_print(log_Warning, "Not enough space in row%d!\n", i+1);
+                    lua_pop(L, 2);
+                    break;
+                }
 
-            if(strlen(layout->row[i]) + strlen(value) >= SIGINFO_ROWLEN) {
-                log_print(log_Warning, "Not enough space in row%d!\n", i+1);
-                lua_pop(L, 2);
-                break;
+                strcat(layout->row[i], value);
+            } else {
+                log_print(log_Warning, "Invalid value in row%d!\n", i+1);
             }
 
-            strcat(layout->row[i], value);
             /* remove value; keep key for next iteration */
             lua_pop(L, 1);
         }
@@ -142,6 +177,8 @@ static int lua_settings_parse_integer(lua_State *L, const char *name) {
 }
 
 void lua_settings_parse(lua_State *L, siginfo_Settings *settings) {
+    lua_plugin_execute(L);
+
     lua_getglobal(L, "siginfo");
 
     if(!lua_istable(L, -1)) {
@@ -165,34 +202,4 @@ void lua_settings_parse(lua_State *L, siginfo_Settings *settings) {
 
     /* pop siginfo namespace table */
     lua_pop(L, 1);
-}
-
-int lua_settings_onupdate_callback(lua_State *L) {
-    int doupdate = 1;
-
-    lua_getglobal(L, "siginfo");
-    lua_getfield(L, -1, "onupdate");
-
-    if(lua_isfunction(L, -1)) {
-        lua_helper_callfunction(L, 0, 1);
-        if(lua_isboolean(L, -1)) {
-            doupdate = lua_toboolean(L, -1);
-        }
-    }
-    lua_pop(L, 2);
-
-    return doupdate;
-}
-
-void lua_settings_onerror_callback(lua_State *L, const char *message, int status) {
-    lua_getglobal(L, "siginfo");
-    lua_getfield(L, -1, "onerror");
-
-    if(lua_isfunction(L, -1)) {
-        lua_pushstring(L, message);
-        lua_pushnumber(L, status);
-        lua_helper_callfunction(L, 2, 0);
-    }
-
-    lua_pop(L, 2);
 }

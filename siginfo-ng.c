@@ -5,10 +5,13 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <getopt.h>
 #include <sys/stat.h>
 
 #include "siginfo-ng.h"
+
+#ifdef USE_GETOPT_LONG
+#include <getopt.h>
+#endif
 
 void log_print(log_Severity severity, const char *fmt, ...) {
     va_list args;
@@ -72,15 +75,21 @@ static const char *client_find_configfile() {
 }
 
 static void client_update(lua_State *L, siginfo_Settings *settings) {
+    int status;
+    const char *message;
+
     lua_settings_parse(L, settings);
 
-    if(lua_settings_onupdate_callback(L)) {
-        int status = siginfo_publish_data(settings);
-        if(status != 100) {
-            const char *message = siginfo_status_message(status);
-            lua_settings_onerror_callback(L, message, status);
-            log_print(log_Error, "Server \"%s\" - %s\n", settings->server, message);
-        }
+    status = siginfo_publish_data(settings);
+    message = siginfo_status_message(status);
+
+    lua_pushinteger(L, status);
+    lua_helper_setfield_siginfo_ng(L, "status");
+    lua_pushstring(L, message);
+    lua_helper_setfield_siginfo_ng(L, "message");
+
+    if(status != 100) {
+        log_print(log_Error, "Server \"%s\" - %s\n", settings->server, message);
     }
 }
 
@@ -88,7 +97,6 @@ static void client_show_layout(lua_State *L, siginfo_Settings *settings) {
     int i;
 
     lua_settings_parse(L, settings);
-    lua_settings_onupdate_callback(L);
 
     for(i=0; i<SIGINFO_ROWS; i++) {
         printf("%s\n", settings->layout.row[i]);
@@ -143,13 +151,13 @@ static void client_print_help() {
     exit(EXIT_SUCCESS);
 }
 
-
 int main(int argc, char *argv[]) {
     lua_State *L;
     siginfo_Settings settings;
     const char *configfile = NULL, *logfile = NULL;
     enum { action_Show, action_Daemon, action_Update } action = action_Update;
     int result, arguments = 0;
+#ifdef USE_GETOPT_LONG
     static const struct option long_options[] = {
         { "show",      no_argument,       0, 's' },
         { "daemon",    no_argument,       0, 'd' },
@@ -159,9 +167,14 @@ int main(int argc, char *argv[]) {
         { "version",   no_argument,       0, 'v' },
         { NULL,        0,              NULL,  0  }
     };
+#endif
 
     while (optind < argc) {
+#ifdef USE_GETOPT_LONG
         result = getopt_long(argc, argv, "sdc:l:hv", long_options, NULL);
+#else
+        result = getopt(argc, argv, "sdc:l:hv-");
+#endif
         arguments++;
 
         switch(result) {
@@ -183,6 +196,13 @@ int main(int argc, char *argv[]) {
             case 'h': /* help */
                 client_print_help();
                 break;
+#ifndef USE_GETOPT_LONG
+            case '-': /* long option */
+                log_print(log_Notice,
+                    "Long options are not available on your platform!\n");
+                exit(EXIT_FAILURE);
+                break;
+#endif
             default: /* unknown */
                 break;
         }
