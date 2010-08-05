@@ -10,7 +10,7 @@ LDFLAGS=-lm -llua
 # siginfo-ng settings
 #
 
-# Platform architecture (stolen from Linux makefile)
+# Platform architecture (sed expression stolen from Linux makefile)
 OS=$(shell uname -s)
 ARCH=$(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 			-e s/arm.*/arm/ -e s/sa110/arm/ \
@@ -79,4 +79,4 @@ echo:
 	@echo "LUA     : $(LUA)"
 	@echo "OPTIONS : $(OPTIONS)"
 
-.PHONY: include-lua install uninstall forced-uninstall clean
+.PHONY: include-lua install uninstall forced-uninstall clean echo

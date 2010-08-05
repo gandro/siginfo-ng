@@ -74,7 +74,7 @@ static const char *client_find_configfile() {
     return NULL;
 }
 
-static void client_update(lua_State *L, siginfo_Settings *settings) {
+static int client_update(lua_State *L, siginfo_Settings *settings) {
     int status;
     const char *message;
 
@@ -91,6 +91,8 @@ static void client_update(lua_State *L, siginfo_Settings *settings) {
     if(status != 100) {
         log_print(log_Error, "Server \"%s\" - %s\n", settings->server, message);
     }
+
+    return (status == 100);
 }
 
 static void client_show_layout(lua_State *L, siginfo_Settings *settings) {
@@ -103,9 +105,14 @@ static void client_show_layout(lua_State *L, siginfo_Settings *settings) {
     }
 }
 
-static void client_start_deamon(lua_State *L, siginfo_Settings *settings) {
-    pid_t pid = fork();
+static int client_start_deamon(lua_State *L, siginfo_Settings *settings) {
+    pid_t pid;
 
+    if(!client_update(L, settings)) {
+        return EXIT_FAILURE;
+    }
+
+    pid = fork();
     if(pid == 0) {
         int nullfd = open("/dev/null", O_RDWR, 0);
         if(nullfd > 0) {
@@ -114,13 +121,15 @@ static void client_start_deamon(lua_State *L, siginfo_Settings *settings) {
             close(nullfd);
         }
 
-        do {
+        while(sleep(settings->interval) == 0) {
             client_update(L, settings);
-        } while(sleep(settings->interval) == 0);
+        }
     } else if(pid < 0) {
         log_print(log_Fatal, "client_start_deamon: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }
 
 static void client_print_version() {
@@ -156,7 +165,7 @@ int main(int argc, char *argv[]) {
     siginfo_Settings settings;
     const char *configfile = NULL, *logfile = NULL;
     enum { action_Show, action_Daemon, action_Update } action = action_Update;
-    int result, arguments = 0;
+    int exit, result, arguments = 0;
 #ifdef USE_GETOPT_LONG
     static const struct option long_options[] = {
         { "show",      no_argument,       0, 's' },
@@ -216,21 +225,22 @@ int main(int argc, char *argv[]) {
         configfile = client_find_configfile();
     }
 
+    exit = EXIT_SUCCESS;
     L = lua_helper_initstate();
     lua_settings_loadfile(L, configfile);
 
     switch(action) {
         case action_Update:
-            client_update(L, &settings);
+            exit = client_update(L, &settings);
             break;
         case action_Show:
             client_show_layout(L, &settings);
             break;
         case action_Daemon:
-            client_start_deamon(L, &settings);
+            exit = client_start_deamon(L, &settings);
             break;
     }
 
     lua_close(L);
-    return EXIT_SUCCESS;
+    return exit;
 }
