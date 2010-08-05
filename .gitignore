@@ -1,5 +1,4 @@
-plugins/*.o
+plugins/
 *.o
-init_plugins.c
-.plugins
+*~
 siginfo-ng

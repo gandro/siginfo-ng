@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+
+#include <sys/utsname.h>
 
 #include "siginfo-ng.h"
 
@@ -135,6 +138,7 @@ static void lua_helper_register_metatables(lua_State *L) {
 
 lua_State *lua_helper_initstate() {
     lua_State *L = lua_open();
+    struct utsname utsname;
 
     /* load Lua stdlib */
     luaL_openlibs(L);
@@ -155,6 +159,45 @@ lua_State *lua_helper_initstate() {
     /* create plugin namespace table */
     lua_newtable(L);
     lua_helper_setfield_siginfo_ng(L, "plugins");
+
+    /* add siginfo.ng.os and siginfo.ng.arch */
+    if(uname(&utsname) == -1) {
+        log_print(log_Error, "uname: %s\n", strerror(errno));
+    } else {
+        const char *os, *arch;
+
+        os = utsname.sysname;
+        lua_pushstring(L, os);
+        lua_helper_setfield_siginfo_ng(L, "os");
+
+        arch = utsname.machine;
+        if(strlen(arch) == 4 && arch[0] == 'i' &&
+            arch[2] == '8' && arch[3] == '6'
+        ) {
+            arch = "i386";
+        } else if(strcmp(arch, "sun4u") == 0) {
+            arch = "sparc64";
+        } else if(strncmp(arch, "arm", 3) == 0) {
+            arch = "arm";
+        } else if(strcmp(arch, "sa110") == 0) {
+            arch = "arm";
+        } else if(strcmp(arch, "s390x") == 0) {
+            arch = "s390";
+        } else if(strcmp(arch, "parisc64") == 0) {
+            arch = "parisc";
+        } else if(strncmp(arch, "ppc", 3) == 0) {
+            arch = "ppc";
+        } else if(strncmp(arch, "mips", 4) == 0) {
+            arch = "mips";
+        } else if(strlen(arch) >= 3 && strncmp(arch, "sh", 2) == 0 &&
+            arch[2] >= '2' && arch[2] <= '4'
+        ) {
+            arch = "sh";
+        }
+
+        lua_pushstring(L, arch);
+        lua_helper_setfield_siginfo_ng(L, "arch");
+    }
 
     lua_settings_load_defaults(L);
     lua_plugin_register_api(L);
