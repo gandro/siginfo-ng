@@ -10,6 +10,14 @@ LDFLAGS=-lm -llua
 # siginfo-ng settings
 #
 
+# Platform architecture (stolen from Linux makefile)
+OS=$(shell uname -s)
+ARCH=$(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
+			-e s/arm.*/arm/ -e s/sa110/arm/ \
+			-e s/s390x/s390/ -e s/parisc64/parisc/ \
+			-e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
+			-e s/sh[234].*/sh/ )
+
 # Remove this if your libc does not support getopt_long
 OPTIONS=-DUSE_GETOPT_LONG
 
@@ -22,7 +30,7 @@ LUA_PLATFORM=posix
 LUA_PREFIX=$(LUA)
 LUA_LDFLAGS=-lm
 
-all: siginfo-ng
+all: siginfo-ng plugins
 
 siginfo-ng: $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) $(LDFLAGS) -o $@
@@ -33,6 +41,12 @@ siginfo-ng: $(OBJECTS)
 include-lua: $(LUA_PREFIX)
 	$(MAKE) all CFLAGS="$(CFLAGS) -I$(LUA_PREFIX)/include/" LDFLAGS="$(LUA_LDFLAGS)" \
 		OBJECTS="$(OBJECTS) $(LUA_PREFIX)/lib/liblua.a"
+
+plugins:
+	mkdir plugins/
+	cp -v platform/*.lua plugins/
+	cp -v platform/$(OS)/*.lua plugins/
+	cp -v platform/$(OS)/$(ARCH)/*.lua plugins/
 
 $(LUA):
 	wget "http://www.lua.org/ftp/$(LUA).tar.gz" -O "$(LUA).tar.gz"
@@ -54,8 +68,15 @@ uninstall:
 
 clean:
 	rm -f siginfo-ng
+	rm -rf plugins/
 	rm -f $(OBJECTS)
 	rm -f "$(LUA).tar.gz"
 	rm -rf $(LUA)
 
-.PHONY: include-lua install clean
+echo:
+	@echo "OS      : $(OS)"
+	@echo "ARCH    : $(ARCH)"
+	@echo "LUA     : $(LUA)"
+	@echo "OPTIONS : $(OPTIONS)"
+
+.PHONY: include-lua install uninstall forced-uninstall clean

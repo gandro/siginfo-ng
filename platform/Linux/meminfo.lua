@@ -1,5 +1,5 @@
 --[[
-    memory information on linux
+    linux memory information
 ]]
 
 using "RAM"

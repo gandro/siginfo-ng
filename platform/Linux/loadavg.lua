@@ -1,5 +1,5 @@
 --[[
-    Linux load average
+    linux load average
 ]]
 
 using "LOAD"

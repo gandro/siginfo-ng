@@ -1,5 +1,5 @@
 --[[
-    POSIX uname system information
+    posix uname system information
 ]]
 
 using "OS"

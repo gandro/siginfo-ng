@@ -1,5 +1,5 @@
 --[[
-    linux harddisk information
+    posix harddisk information
 ]]
 
 using "HDD"

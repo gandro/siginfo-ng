@@ -1,5 +1,5 @@
 --[[
-    CPU information on linux
+    linux-x86 cpu information
 ]]
 
 using "CPU"
