@@ -16,8 +16,8 @@ end
 RAM.CACHED = meminfo["Cached"] + meminfo["Buffers"]
 
 RAM.TOTAL  = meminfo["MemTotal"]
-RAM.FREE   = meminfo["MemFree"]
-RAM.USED   = RAM.TOTAL - RAM.FREE - RAM.CACHED
+RAM.FREE   = meminfo["MemFree"] + RAM.CACHED
+RAM.USED   = RAM.TOTAL - RAM.FREE
 
 SWAP.TOTAL = meminfo["SwapTotal"]
 SWAP.FREE  = meminfo["SwapFree"]

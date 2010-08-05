@@ -45,8 +45,8 @@ include-lua: $(LUA_PREFIX)
 plugins:
 	mkdir plugins/
 	cp -v platform/*.lua plugins/
-	cp -v platform/$(OS)/*.lua plugins/
-	cp -v platform/$(OS)/$(ARCH)/*.lua plugins/
+	if [ -d platform/$(OS) ] ; then cp -v platform/$(OS)/*.lua plugins/ ; fi
+	if [ -d platform/$(OS)/$(ARCH) ] ; then cp -v platform/$(OS)/$(ARCH)/*.lua plugins/ ; fi
 
 $(LUA):
 	wget "http://www.lua.org/ftp/$(LUA).tar.gz" -O "$(LUA).tar.gz"
