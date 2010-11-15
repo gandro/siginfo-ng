@@ -30,5 +30,9 @@ if __init__ then
         CPU.MODEL = string.gsub(cpuinfo["cpu"], "(%s+)", " ")
         CPU.CORES = cpuinfo["ncpus active"] or 1
 
+    elseif siginfo.ng.arch == "arm" then
+        -- November 15, 2010 by Wynton "crazycusti" Tietjen
+        CPU.MODEL = string.gsub(cpuinfo["Processor"], "(%s+)", " ")
+
     end
 end
