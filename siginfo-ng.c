@@ -41,7 +41,7 @@ void log_print(log_Severity severity, const char *fmt, ...) {
 
 
 static void log_redirect(const char *logfile)  {
-    FILE *logfd = fopen(logfile, "a");
+    FILE *logfd = fopen(logfile, "a+");
     if(logfd == NULL) {
         log_print(log_Error, "Failed to open logfile: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
@@ -122,6 +122,7 @@ static int client_start_deamon(lua_State *L, siginfo_Settings *settings) {
         }
 
         while(sleep(settings->interval) == 0) {
+            lua_plugin_refresh(L);
             client_update(L, settings);
         }
     } else if(pid < 0) {

@@ -57,6 +57,9 @@ void lua_settings_loadfile(lua_State *L, const char *configfile) {
         lua_plugin_load_dir(L, pluginpath);
     }
 
+    /* save and execute config code */
+    lua_pushvalue(L, -1);
+    lua_helper_setfield_siginfo_ng(L, "__config");
     lua_helper_callfunction(L, 0, 0);
 }
 
@@ -177,8 +180,6 @@ static int lua_settings_parse_integer(lua_State *L, const char *name) {
 }
 
 void lua_settings_parse(lua_State *L, siginfo_Settings *settings) {
-    lua_plugin_execute(L);
-
     lua_getglobal(L, "siginfo");
 
     if(!lua_istable(L, -1)) {

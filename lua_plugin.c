@@ -116,6 +116,12 @@ void lua_plugin_execute(lua_State *L) {
     lua_pop(L, 1);
 }
 
+void lua_plugin_refresh(lua_State *L) {
+    lua_plugin_execute(L);
+    lua_helper_getfield_siginfo_ng(L, "__config");
+    lua_helper_callfunction(L, 0, 0);
+}
+
 static int lua_plugin_api_loadplugin(lua_State *L) {
     lua_plugin_load(L, luaL_checkstring(L, 1), luaL_checkstring(L, 2));
     return 0;
