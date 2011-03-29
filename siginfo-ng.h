@@ -48,6 +48,7 @@ void lua_plugin_load(lua_State *L, const char *namespace, const char *filename);
 void lua_plugin_load_dir(lua_State *L, const char *directory);
 void lua_plugin_execute(lua_State *L);
 void lua_plugin_register_api(lua_State *L);
+void lua_plugin_refresh(lua_State *L);
 
 void lua_settings_load_defaults(lua_State *L);
 void lua_settings_loadfile(lua_State *L, const char *configfile);

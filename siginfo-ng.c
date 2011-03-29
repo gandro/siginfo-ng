@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/stat.h>
 
 #include "siginfo-ng.h"
@@ -105,6 +106,10 @@ static void client_show_layout(lua_State *L, siginfo_Settings *settings) {
     }
 }
 
+static void client_daemon_terminating(int signal) {
+    log_print(log_Notice, "Daemon received signal %d...\n", signal);
+}
+
 static int client_start_deamon(lua_State *L, siginfo_Settings *settings) {
     pid_t pid;
 
@@ -122,8 +127,14 @@ static int client_start_deamon(lua_State *L, siginfo_Settings *settings) {
         }
 
         while(sleep(settings->interval) == 0) {
+            signal(SIGINT,  SIG_IGN);
+            signal(SIGTERM, SIG_IGN);
+
             lua_plugin_refresh(L);
             client_update(L, settings);
+
+            signal(SIGINT,  client_daemon_terminating);
+            signal(SIGTERM, client_daemon_terminating);
         }
     } else if(pid < 0) {
         log_print(log_Fatal, "client_start_deamon: %s\n", strerror(errno));
@@ -198,7 +209,7 @@ int main(int argc, char *argv[]) {
                 configfile = optarg;
                 break;
             case 'l': /* logfile */
-                configfile = optarg;
+                logfile = optarg;
                 break;
             case 'v': /* version */
                 client_print_version();
