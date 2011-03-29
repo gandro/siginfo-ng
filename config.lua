@@ -3,14 +3,12 @@
 ]]
 
 -- username
-siginfo.username = "gandro"
+siginfo.username = "noname"
 -- password (as sha1 hash)
-siginfo.password = "c95397644dd9b9d4a2eaaf25575132c35243d615"
+siginfo.password = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
 
 -- computer profile
 siginfo.computer = "default-pc"
-
-siginfo.interval = 5
 
 siginfo.layout = {
     row1 = {
