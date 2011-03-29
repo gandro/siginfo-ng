@@ -2,7 +2,7 @@
 #define _SIGINFO_NG_H
 
 #define CLIENT_NAME     "siginfo-ng"
-#define CLIENT_VERSION  "0.2.0pre4"
+#define CLIENT_VERSION  "0.2.0"
 
 #define SIGINFO_SERVER      "siginfo.de"
 #define SIGINFO_PORT        80
